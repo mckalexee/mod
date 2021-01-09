@@ -18,20 +18,24 @@ let vs = `
 `
 
 let fs = `
-  precision mediump float;
+  precision highp float;
   varying vec2 vpos;
-  uniform float canvas_size;
+  uniform float canvas_x;
+  uniform float canvas_y;
   uniform float base;
   uniform float shift;
 
   void main (void) {
-    vec2 normal = (vpos + 1.0) * canvas_size / 2.0;
-    float color_value = mod(normal.x * normal.y + shift, base);
+    float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+    float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+    float color_value = mod(normal_x * normal_y + shift, base);
     float color_value_normal = color_value / (base - 1.0);
 
     gl_FragColor = vec4(vec3(color_value_normal), 1.0);
+    // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
   }
 `
+
 
 let vertexShader = gl.createShader(gl.VERTEX_SHADER)
 gl.shaderSource(vertexShader, vs)
@@ -54,8 +58,8 @@ gl.enableVertexAttribArray(posAttribute);
 gl.vertexAttribPointer(posAttribute, 2, gl.FLOAT, gl.FALSE, 0, 0)
 let baseLoc = gl.getUniformLocation(program, 'base');
 let shiftLoc = gl.getUniformLocation(program, 'shift');
-let canvasSizeLoc = gl.getUniformLocation(program, 'canvas_size');
-gl.uniform1f(canvasSizeLoc, 1024)
+let canvasSizeXLoc = gl.getUniformLocation(program, 'canvas_x');
+let canvasSizeYLoc = gl.getUniformLocation(program, 'canvas_y');
 
 
 let vertices = new Float32Array([
@@ -69,11 +73,27 @@ let vertices = new Float32Array([
 
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-let base = 2048;
+let base = 1024;
 let shift = 0;
 
 function animate() {
-  shift = (shift + 2) % base
+  shift = (shift + 1) % base;
+
+  const {width, height} = gl.canvas.getBoundingClientRect();
+  const displayWidth  = width
+  const displayHeight = height
+
+  base = Math.min(width, height);
+
+  if(gl.canvas.width != displayWidth || gl.canvas.height != displayHeight) {
+    gl.canvas.width = displayWidth;
+    gl.canvas.height = displayHeight;
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+  }
+
+
+  gl.uniform1f(canvasSizeXLoc, canvas.width)
+  gl.uniform1f(canvasSizeYLoc, canvas.height)
 
   gl.uniform1f(baseLoc, base)
   gl.uniform1f(shiftLoc, shift)
