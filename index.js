@@ -20,11 +20,12 @@ let vs = `
 let fs = `
   precision mediump float;
   varying vec2 vpos;
+  uniform float canvas_size;
   uniform float base;
   uniform float shift;
 
   void main (void) {
-    vec2 normal = (vpos + 1.0) * base / 2.0;
+    vec2 normal = (vpos + 1.0) * canvas_size / 2.0;
     float color_value = mod(normal.x * normal.y + shift, base);
     float color_value_normal = color_value / (base - 1.0);
 
@@ -53,6 +54,8 @@ gl.enableVertexAttribArray(posAttribute);
 gl.vertexAttribPointer(posAttribute, 2, gl.FLOAT, gl.FALSE, 0, 0)
 let baseLoc = gl.getUniformLocation(program, 'base');
 let shiftLoc = gl.getUniformLocation(program, 'shift');
+let canvasSizeLoc = gl.getUniformLocation(program, 'canvas_size');
+gl.uniform1f(canvasSizeLoc, 1024)
 
 
 let vertices = new Float32Array([
@@ -66,7 +69,7 @@ let vertices = new Float32Array([
 
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-let base = 1024;
+let base = 2048;
 let shift = 0;
 
 function animate() {
