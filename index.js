@@ -79,13 +79,17 @@ let shift = 0;
 function animate() {
   shift = (shift + 1) % base;
 
-  const {width, height} = gl.canvas.getBoundingClientRect();
-  const displayWidth  = width
-  const displayHeight = height
-
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   base = Math.min(width, height);
 
+  const displayWidth  = base
+  const displayHeight = base
+
+
   if(gl.canvas.width != displayWidth || gl.canvas.height != displayHeight) {
+    canvas.width = base;
+    canvas.height = base;
     gl.canvas.width = displayWidth;
     gl.canvas.height = displayHeight;
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
