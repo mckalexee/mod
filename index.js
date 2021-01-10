@@ -35,6 +35,49 @@ let fs = `
     // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
   }
 `
+
+let fsSmooth = `
+  precision highp float;
+  varying vec2 vpos;
+  uniform float canvas_x;
+  uniform float canvas_y;
+  uniform float base;
+  uniform float shift;
+
+  void main (void) {
+    float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+    float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+    float color_value = mod(normal_x * normal_y + shift, base);
+    float color_value_normal = color_value / (base - 1.0);
+    color_value_normal = min(1.0 - color_value_normal, color_value_normal) * 2.0;
+
+    gl_FragColor = vec4(vec3(color_value_normal), 1.0);
+    // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
+  }
+`
+
+let fsSin = `
+  #define PI 3.1415926538
+  precision highp float;
+  varying vec2 vpos;
+  uniform float canvas_x;
+  uniform float canvas_y;
+  uniform float base;
+  uniform float shift;
+
+  void main (void) {
+    float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+    float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+    float color_value = mod(normal_x * normal_y + shift, base);
+    float color_value_normal = color_value / (base - 1.0);
+    float color_value_rad  = color_value_normal * PI;
+    float color_value_sin = sin(color_value_rad);
+    gl_FragColor = vec4(color_value_sin, color_value_sin, color_value_sin, 1.0);
+    // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
+  }
+`
+
+
 let fsColorBands = `
   #define PI 3.1415926538
   precision highp float;
