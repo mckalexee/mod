@@ -234,7 +234,7 @@ gl.shaderSource(vertexShader, vs)
 gl.compileShader(vertexShader);
 
 let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-gl.shaderSource(fragmentShader, fsMod3);
+gl.shaderSource(fragmentShader, fs);
 // gl.shaderSource(fragmentShader, fsColorBands);
 gl.compileShader(fragmentShader);
 
