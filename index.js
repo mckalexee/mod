@@ -7,6 +7,7 @@ let gl = canvas.getContext('webgl');
 gl.clearColor(1, 0 , 0, 1)
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+let base = 1024;
 // Set the vertex shader
 let vs = `
   attribute vec2 pos;
@@ -30,12 +31,16 @@ let fs = `
   uniform float translate_y;
 
   void main (void) {
+
     // Normalize the x coordinate between 0 and 1
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+
     // Translate the X position
-    normal_x = normal_x - (translate_x * base);
+    normal_x = normal_x + (translate_x * base);
+
     // Normalize the y coordinate between 0 and 1;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+
     // Translate the Y position
     normal_y = normal_y - (translate_y * base);
     float color_value = mod(normal_x * normal_y + step, base);
@@ -46,6 +51,39 @@ let fs = `
   }
 `
 
+let fsPattern = `
+  precision highp float;
+  varying vec2 vpos;
+  uniform float canvas_x;
+  uniform float canvas_y;
+  uniform float base;
+  uniform float step;
+  uniform float translate_x;
+  uniform float translate_y;
+
+  void main (void) {
+
+    // Normalize the x coordinate between 0 and 1
+    float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+
+    // Translate the X position
+    normal_x = normal_x + (translate_x * base);
+
+    // Normalize the y coordinate between 0 and 1;
+    float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+
+    // Translate the Y position
+    normal_y = normal_y - (translate_y * base);
+
+
+    float color_value = mod(normal_x * normal_y + step, base);
+    float color_value_normal = color_value / (base - 1.0);
+    if(color_value_normal > 0.5) { color_value_normal = 1.0; }
+    if(color_value_normal <= 0.5) { color_value_normal = 0.0; }
+    gl_FragColor = vec4(vec3(color_value_normal), 1.0);
+    // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
+  }
+`
 // A straightforward black to white to black shader
 let fsSmooth = `
   precision highp float;
@@ -120,27 +158,6 @@ let fsColorBands = `
     // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
   }
 `
-
-
-/**
- * The HTML element for a zoom slider
- */
-const zoomSlider = document.getElementById('zoom-slider')
-
-/**
- * Display of the zoom value
- */
-const zoomDisplay = document.getElementById('zoom-value');
-/**
- * How far we're zoomed in in percentage
- */
-let zoomFactor = 2;
-
-zoomSlider.oninput = (e) => {
-  zoomFactor = 1 + (e.target.value / 100);
-  zoomDisplay.innerText = `${e.target.value}%`;
-}
-
 /**
  * The HTML element for a zoom slider
  */
@@ -157,8 +174,40 @@ let translateX = 0;
 
 translateXSlider.oninput = (e) => {
   translateX = e.target.value / e.target.max;
-  translateXDisplay.innerText = `${translateX}`;
+  translateXDisplay.innerText = `${translateX.toFixed(2)}`;
 }
+
+function updateTranslateOnZoom(currentZoomFactor) {
+  const xDiff = (0.5 - 1/(2*(currentZoomFactor )));
+  console.log(xDiff);
+  // translateX = xDiff;
+  translateXDisplay.innerText = `${translateX.toFixed(2)}`;
+}
+
+
+
+/**
+ * The HTML element for a zoom slider
+ */
+const zoomSlider = document.getElementById('zoom-slider')
+
+/**
+ * Display of the zoom value
+ */
+const zoomDisplay = document.getElementById('zoom-value');
+/**
+ * How far we're zoomed in in percentage
+ */
+let zoomFactor = 1;
+
+zoomSlider.oninput = (e) => {
+  let newZoomFactor = 1 + (e.target.value / 100);
+  updateTranslateOnZoom(newZoomFactor);
+
+  zoomFactor = 1 + (e.target.value / 100);
+  zoomDisplay.innerText = `${e.target.value}%`;
+}
+
 
 /**
  * The HTML element for a zoom slider
@@ -180,13 +229,12 @@ translateYSlider.oninput = (e) => {
 }
 
 
-
 let vertexShader = gl.createShader(gl.VERTEX_SHADER)
 gl.shaderSource(vertexShader, vs)
 gl.compileShader(vertexShader);
 
 let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-gl.shaderSource(fragmentShader, fs);
+gl.shaderSource(fragmentShader, fsMod3);
 // gl.shaderSource(fragmentShader, fsColorBands);
 gl.compileShader(fragmentShader);
 
@@ -220,13 +268,12 @@ let vertices = new Float32Array([
 
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-let base = 1024;
 let step = 0;
 
 
 function animate() {
   let zoom = base * zoomFactor;
-  step = (step + 1 * zoomFactor) % zoom;
+  step = (step + 0 * zoomFactor) % zoom;
 
   const width = window.innerWidth;
   const height = window.innerHeight;
