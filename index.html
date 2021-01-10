@@ -23,13 +23,14 @@
 
     .bar {
       position: absolute;
+      flex-direction: column;
       display: flex;
       bottom: 0;
       left: 0;
       background-color: #333;
       color: white;
       font-family: Arial, Helvetica, sans-serif;
-      padding: 20px;
+      padding: 10px;
       border-radius: 0 20px 0 0;
       opacity: 0.5;
     }
@@ -42,6 +43,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      margin: 10px;
     }
   </style>
 </head>
@@ -53,10 +55,19 @@
   <div class="bar">
     <div class="input-group">
       <label for="zoom-slider">Zoom</label>
-      <input type="range" name="zoom" id="zoom-slider" min="0" max="1000" value="0">
-      <div id="zoom-value">0%</div>
+      <input type="range" name="zoom" id="zoom-slider" min="0" max="1000" value="200">
+      <div id="zoom-value">200%</div>
     </div>
-
+    <div class="input-group">
+      <label for="translate-x-slider">Translate X</label>
+      <input type="range" name="translate-x" id="translate-x-slider" min="0" max="1000" value="0">
+      <div id="translate-x-value">0</div>
+    </div>
+    <div class="input-group">
+      <label for="translate-y-slider">Translate Y</label>
+      <input type="range" name="translate-y" id="translate-y-slider" min="0" max="1000" value="0">
+      <div id="translate-y-value">0</div>
+    </div>
   </div>
   <script src="index.js"></script>
 

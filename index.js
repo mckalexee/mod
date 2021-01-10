@@ -26,10 +26,18 @@ let fs = `
   uniform float canvas_y;
   uniform float base;
   uniform float step;
+  uniform float translate_x;
+  uniform float translate_y;
 
   void main (void) {
+    // Normalize the x coordinate between 0 and 1
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
+    // Translate the X position
+    normal_x = normal_x - (translate_x * base);
+    // Normalize the y coordinate between 0 and 1;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
+    // Translate the Y position
+    normal_y = normal_y - (translate_y * base);
     float color_value = mod(normal_x * normal_y + step, base);
     float color_value_normal = color_value / (base - 1.0);
 
@@ -126,11 +134,49 @@ const zoomDisplay = document.getElementById('zoom-value');
 /**
  * How far we're zoomed in in percentage
  */
-let zoomFactor = 1;
+let zoomFactor = 2;
 
 zoomSlider.oninput = (e) => {
   zoomFactor = 1 + (e.target.value / 100);
   zoomDisplay.innerText = `${e.target.value}%`;
+}
+
+/**
+ * The HTML element for a zoom slider
+ */
+const translateXSlider = document.getElementById('translate-x-slider')
+
+/**
+ * Display of the translateX value
+ */
+const translateXDisplay = document.getElementById('translate-x-value');
+/**
+ * How far we're translateXed in in percentage
+ */
+let translateX = 0;
+
+translateXSlider.oninput = (e) => {
+  translateX = e.target.value / e.target.max;
+  translateXDisplay.innerText = `${translateX}`;
+}
+
+/**
+ * The HTML element for a zoom slider
+ */
+const translateYSlider = document.getElementById('translate-y-slider')
+
+/**
+ * Display of the translateY value
+ */
+const translateYDisplay = document.getElementById('translate-y-value');
+/**
+ * How far we're translateYed in in percentage
+ */
+let translateY = 0;
+
+translateYSlider.oninput = (e) => {
+  translateY = e.target.value / e.target.max;
+  translateYDisplay.innerText = `${translateY}`;
 }
 
 
@@ -159,6 +205,8 @@ let baseLoc = gl.getUniformLocation(program, 'base');
 let stepLoc = gl.getUniformLocation(program, 'step');
 let canvasSizeXLoc = gl.getUniformLocation(program, 'canvas_x');
 let canvasSizeYLoc = gl.getUniformLocation(program, 'canvas_y');
+const translateXLoc = gl.getUniformLocation(program, 'translate_x');
+const translateYLoc = gl.getUniformLocation(program, 'translate_y');
 
 
 let vertices = new Float32Array([
@@ -175,9 +223,10 @@ gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 let base = 1024;
 let step = 0;
 
+
 function animate() {
   let zoom = base * zoomFactor;
-  step = (step + 10 * zoomFactor) % zoom;
+  step = (step + 1 * zoomFactor) % zoom;
 
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -198,6 +247,8 @@ function animate() {
 
   gl.uniform1f(canvasSizeXLoc, canvas.width)
   gl.uniform1f(canvasSizeYLoc, canvas.height)
+  gl.uniform1f(translateXLoc, translateX)
+  gl.uniform1f(translateYLoc, translateY)
 
   gl.uniform1f(baseLoc, zoom)
   gl.uniform1f(stepLoc, step)
