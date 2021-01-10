@@ -1,12 +1,13 @@
+
+// Attach to the Canvas
 let canvas = document.getElementById('canvas');
-
+// Create the GL context
 let gl = canvas.getContext('webgl');
-
 // Set the clear color
 gl.clearColor(1, 0 , 0, 1)
-
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+// Set the vertex shader
 let vs = `
   attribute vec2 pos;
   varying vec2 vpos;
@@ -17,18 +18,19 @@ let vs = `
   }
 `
 
+// A straightforward black to white shader
 let fs = `
   precision highp float;
   varying vec2 vpos;
   uniform float canvas_x;
   uniform float canvas_y;
   uniform float base;
-  uniform float shift;
+  uniform float step;
 
   void main (void) {
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
-    float color_value = mod(normal_x * normal_y + shift, base);
+    float color_value = mod(normal_x * normal_y + step, base);
     float color_value_normal = color_value / (base - 1.0);
 
     gl_FragColor = vec4(vec3(color_value_normal), 1.0);
@@ -36,18 +38,19 @@ let fs = `
   }
 `
 
+// A straightforward black to white to black shader
 let fsSmooth = `
   precision highp float;
   varying vec2 vpos;
   uniform float canvas_x;
   uniform float canvas_y;
   uniform float base;
-  uniform float shift;
+  uniform float step;
 
   void main (void) {
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
-    float color_value = mod(normal_x * normal_y + shift, base);
+    float color_value = mod(normal_x * normal_y + step, base);
     float color_value_normal = color_value / (base - 1.0);
     color_value_normal = min(1.0 - color_value_normal, color_value_normal) * 2.0;
 
@@ -56,6 +59,7 @@ let fsSmooth = `
   }
 `
 
+// A sine wave from black to white
 let fsSin = `
   #define PI 3.1415926538
   precision highp float;
@@ -63,12 +67,12 @@ let fsSin = `
   uniform float canvas_x;
   uniform float canvas_y;
   uniform float base;
-  uniform float shift;
+  uniform float step;
 
   void main (void) {
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
-    float color_value = mod(normal_x * normal_y + shift, base);
+    float color_value = mod(normal_x * normal_y + step, base);
     float color_value_normal = color_value / (base - 1.0);
     float color_value_rad  = color_value_normal * PI;
     float color_value_sin = sin(color_value_rad);
@@ -77,7 +81,7 @@ let fsSin = `
   }
 `
 
-
+// Sin waves RGB
 let fsColorBands = `
   #define PI 3.1415926538
   precision highp float;
@@ -85,14 +89,14 @@ let fsColorBands = `
   uniform float canvas_x;
   uniform float canvas_y;
   uniform float base;
-  uniform float shift;
+  uniform float step;
 
   void main (void) {
     float normal_x = (vpos.x + 1.0) * canvas_x / 2.0;
     float normal_y = (vpos.y + 1.0) * canvas_y / 2.0;
-    float color_value_r = mod(normal_x * normal_y + shift, base);
-    float color_value_g = mod(normal_x * normal_y + shift + (base / 3.0), base);
-    float color_value_b = mod(normal_x * normal_y + shift + (2.0 * base / 3.0), base);
+    float color_value_r = mod(normal_x * normal_y + step, base);
+    float color_value_g = mod(normal_x * normal_y + step + (base / 3.0), base);
+    float color_value_b = mod(normal_x * normal_y + step + (2.0 * base / 3.0), base);
     float color_value_normal_r = color_value_r / (base - 1.0);
     float color_value_normal_g = color_value_g / (base - 1.0);
     float color_value_normal_b = color_value_b / (base - 1.0);
@@ -108,6 +112,26 @@ let fsColorBands = `
     // gl_FragColor = vec4(normal.x, normal.y, 0, 1.0);
   }
 `
+
+
+/**
+ * The HTML element for a zoom slider
+ */
+const zoomSlider = document.getElementById('zoom-slider')
+
+/**
+ * Display of the zoom value
+ */
+const zoomDisplay = document.getElementById('zoom-value');
+/**
+ * How far we're zoomed in in percentage
+ */
+let zoomFactor = 1;
+
+zoomSlider.oninput = (e) => {
+  zoomFactor = 1 + (e.target.value / 100);
+  zoomDisplay.innerText = `${e.target.value}%`;
+}
 
 
 
@@ -132,7 +156,7 @@ let posAttribute = gl.getAttribLocation(program, 'pos');
 gl.enableVertexAttribArray(posAttribute);
 gl.vertexAttribPointer(posAttribute, 2, gl.FLOAT, gl.FALSE, 0, 0)
 let baseLoc = gl.getUniformLocation(program, 'base');
-let shiftLoc = gl.getUniformLocation(program, 'shift');
+let stepLoc = gl.getUniformLocation(program, 'step');
 let canvasSizeXLoc = gl.getUniformLocation(program, 'canvas_x');
 let canvasSizeYLoc = gl.getUniformLocation(program, 'canvas_y');
 
@@ -149,10 +173,11 @@ let vertices = new Float32Array([
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
 let base = 1024;
-let shift = 0;
+let step = 0;
 
 function animate() {
-  shift = (shift + 2) % base;
+  let zoom = base * zoomFactor;
+  step = (step + 10 * zoomFactor) % zoom;
 
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -174,8 +199,8 @@ function animate() {
   gl.uniform1f(canvasSizeXLoc, canvas.width)
   gl.uniform1f(canvasSizeYLoc, canvas.height)
 
-  gl.uniform1f(baseLoc, base)
-  gl.uniform1f(shiftLoc, shift)
+  gl.uniform1f(baseLoc, zoom)
+  gl.uniform1f(stepLoc, step)
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   window.requestAnimationFrame(animate);
