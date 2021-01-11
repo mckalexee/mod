@@ -51,21 +51,49 @@ vec2 getTile(vec2 pixel, float grid_size) {
     tile.y = grid_size - 1.0;
   }
 
-  tile = tile + 1.0;
+  tile = tile;
 
   return(tile);
 }
 
+// Returns colors based on a black to white spectrum
+vec3 get_bw_colors(vec2 tile, float base, float exponent) {
+  float color = floor(mod((tile.x * tile.y), pow(base, exponent)) / pow(base, exponent - 1.0));
+  float color_normal = color / (base - 1.0);
+  return vec3(color_normal);
+}
+
+// Returns colors based on rgb. Only works for base 3
+vec3 get_three_colors(vec2 tile, float base, float exponent) {
+  vec3 bw = get_bw_colors(tile, base, exponent);
+  vec3 colors = vec3(0.0, 0.0, 0.0);
+  if(bw.x < 1.0 / 3.0) {
+    colors.x = 1.0;
+  } else {
+    if(bw.x < 2.0 / 3.0) {
+      colors.y = 1.0;
+    } else {
+      colors.z = 1.0;
+    }
+  }
+  return (colors);
+}
+
 
 void main (void) {
-  float grid_size = 67.0;
-  float base = 97.0;
-  vec2 normal = (vpos + 1.0) / 2.0;
-  vec2 tile = getTile(normal, grid_size);
-  float color = mod(tile.x * tile.y, base);
-  float color_normal = color / (base - 1.0);
+  // Store the pixel location
+  vec2 st = vpos;
 
-  gl_FragColor = vec4(color_normal, color_normal, color_normal, 1.0);
+  float base = 2.0;
+  float exponent = 8.0;
+  float grid_size = pow(base, exponent);
+
+
+
+  vec2 normal = (st + 1.0) / 2.0;
+  vec2 tile = getTile(normal, grid_size);
+  vec3 colors = get_bw_colors(tile, base, exponent);
+  gl_FragColor = vec4(colors, 1.0);
 }
 
 
