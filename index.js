@@ -273,7 +273,7 @@ let step = 0;
 
 function animate() {
   let zoom = base * zoomFactor;
-  step = (step + 0 * zoomFactor) % zoom;
+  step = (step + 1 * zoomFactor) % zoom;
 
   const width = window.innerWidth;
   const height = window.innerHeight;
